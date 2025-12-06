@@ -1,0 +1,13 @@
+node_modules/
+__pycache__/
+.venv/
+.env
+*.pyc
+.DS_Store
+dist/
+build/
+*.log
+.idea/
+.vscode/
+blueprint3d/node_modules/
+blueprint3d/backend/temp/

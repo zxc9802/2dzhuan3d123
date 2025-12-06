@@ -1,0 +1,12 @@
+# Only ignore truly sensitive files
+.env
+*.key
+*.pem
+*.p12
+
+# Skip system files
+.DS_Store
+Thumbs.db
+
+# Skip Claude temp files
+.claude/
