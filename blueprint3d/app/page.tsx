@@ -27,7 +27,7 @@ export default function Home() {
     formData.append("style", style);
 
     try {
-      const response = await fetch("http://localhost:8000/api/generate", {
+      const response = await fetch("/api/generate", {
         method: "POST",
         body: formData,
       });
@@ -38,8 +38,8 @@ export default function Home() {
         throw new Error(data.detail || "生成失败");
       }
 
-      if (data.success && data.imageUrl) {
-        setResultUrl(`http://localhost:8000${data.imageUrl}`);
+      if (data.status === "success" && data.image_url) {
+        setResultUrl(data.image_url);
       } else {
         throw new Error("API未返回图片链接");
       }

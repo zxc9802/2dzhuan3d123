@@ -75,17 +75,16 @@ async def generate_image(request: GenerateRequest):
             img_response = await client.get(image_url)
             img_response.raise_for_status()
 
-            # Generate unique filename
-            filename = f"{uuid.uuid4()}.png"
-
-            # Save image
+            # Convert image to Base64
             img = Image.open(io.BytesIO(img_response.content))
-            img.save(filename)
-
+            buffered = io.BytesIO()
+            img.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+            
             return {
                 "status": "success",
-                "image_url": f"/temp/{filename}",
-                "filename": filename
+                "image_url": f"data:image/png;base64,{img_str}",
+                "filename": "generated.png"
             }
 
     except Exception as e:
