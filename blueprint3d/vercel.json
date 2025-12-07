@@ -1,25 +1,18 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
   "routes": [
     {
-      "src": "/api/generate",
-      "dest": "api/generate.py"
-    },
-    {
-      "src": "/temp/(.*)",
-      "dest": "api/generate.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/"
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
     }
   ],
   "env": {
-    "PYTHON_VERSION": "3.9"
-  },
-  "functions": {
-    "api/generate.py": {
-      "runtime": "python3.9"
-    }
+    "NEXT_PUBLIC_API_URL": "@next_public_api_url"
   }
 }

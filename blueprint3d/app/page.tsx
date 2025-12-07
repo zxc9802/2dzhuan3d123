@@ -1,153 +1,192 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import ImageUpload from "./components/ImageUpload";
-import PreviewCanvas from "./components/PreviewCanvas";
+import { useState } from 'react'
+import ImageUpload from './components/ImageUpload'
+import PreviewCanvas from './components/PreviewCanvas'
+import OptionsPanel from './components/OptionsPanel'
+
+export interface GenerationSettings {
+  viewAngle: string
+  style: string
+  description: string
+}
+
+export interface GeneratedImage {
+  url: string
+  processingTime: number
+}
 
 export default function Home() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [description, setDescription] = useState("");
-  const [viewAngle, setViewAngle] = useState("perspective");
-  const [style, setStyle] = useState("realistic");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [resultUrl, setResultUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string>('')
+  const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState('')
+  const [settings, setSettings] = useState<GenerationSettings>({
+    viewAngle: 'perspective',
+    style: 'realistic',
+    description: ''
+  })
+
+  const handleImageUpload = (imageData: string) => {
+    setUploadedImage(imageData)
+    setGeneratedImage(null)
+    setError('')
+  }
+
+  const handleSettingsChange = (newSettings: Partial<GenerationSettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }))
+  }
 
   const handleGenerate = async () => {
-    if (!selectedFile) return;
+    if (!uploadedImage) {
+      setError('请先上传图片')
+      return
+    }
 
-    setIsGenerating(true);
-    setError(null);
-    setResultUrl(null);
-
-    const formData = new FormData();
-    formData.append("image", selectedFile);
-    formData.append("description", description);
-    formData.append("viewAngle", viewAngle);
-    formData.append("style", style);
+    setIsGenerating(true)
+    setError('')
 
     try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: uploadedImage,
+          description: settings.description,
+          viewAngle: settings.viewAngle,
+          style: settings.style
+        }),
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.detail || "生成失败");
+      if (!response.ok || !data.success) {
+        throw new Error(data.detail || '生成失败')
       }
 
-      if (data.status === "success" && data.image_url) {
-        setResultUrl(data.image_url);
-      } else {
-        throw new Error("API未返回图片链接");
-      }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "请求发生错误，请重试");
+      setGeneratedImage({
+        url: data.imageUrl,
+        processingTime: data.processingTime
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '生成失败，请重试')
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false)
     }
-  };
+  }
 
-  const handleDownload = () => {
-    if (resultUrl) {
-      const link = document.createElement('a');
-      link.href = resultUrl;
-      link.download = `blueprint3d-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+  const handleRegenerate = () => {
+    handleGenerate()
+  }
+
+  const handleDownload = async () => {
+    if (!generatedImage) return
+
+    try {
+      const response = await fetch(generatedImage.url)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `blueprint3d-${Date.now()}.png`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err) {
+      setError('下载失败')
     }
-  };
+  }
 
   return (
     <div className="container">
       <header className="header">
-        <div className="logo">Blueprint3D</div>
-        <div className="text-secondary">v1.0</div>
+        <h1>Blueprint3D</h1>
+        <p>一键将工程图纸转化为3D可视化效果图</p>
       </header>
 
-      <main className="main-layout">
-        {/* Left Column: Upload + Description + Generate */}
-        <aside className="panel">
-          <ImageUpload
-            onImageSelect={setSelectedFile}
-            selectedImage={selectedFile}
-          />
+      <div className="main-layout">
+        <div className="panel">
+          <h2>上传图纸</h2>
+          <ImageUpload onImageUpload={handleImageUpload} />
 
-          <div className="form-group">
-            <label className="label">2. 补充描述 (可选)</label>
+          {uploadedImage && (
+            <div className="uploaded-image-preview" style={{ marginTop: '20px' }}>
+              <h3>已上传的图片</h3>
+              <img
+                src={uploadedImage}
+                alt="Uploaded blueprint"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '300px',
+                  borderRadius: '8px',
+                  marginTop: '10px',
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
+          )}
+
+          <div className="form-group" style={{ marginTop: '20px' }}>
+            <label>补充描述（可选）</label>
             <textarea
-              className="textarea"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="例如：这是一张钢结构厂房的平面图，屋顶有天窗..."
+              placeholder="请描述图纸的关键信息，例如：钢结构厂房平面图、尺寸标注等..."
+              value={settings.description}
+              onChange={(e) => handleSettingsChange({ description: e.target.value })}
             />
           </div>
 
-          <div style={{ marginTop: 'auto' }}>
-            {error && <div className="error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
+          <button
+            className="button"
+            onClick={handleGenerate}
+            disabled={!uploadedImage || isGenerating}
+          >
+            {isGenerating ? '生成中...' : '生成3D效果图'}
+          </button>
+        </div>
 
-            <button
-              className="button"
-              onClick={handleGenerate}
-              disabled={!selectedFile || isGenerating}
-            >
-              {isGenerating ? "正在生成..." : "生成 3D 效果图"}
-            </button>
-          </div>
-        </aside>
-
-        {/* Center Column: Preview */}
-        <section className="panel" style={{ background: 'white', flex: 1, padding: '1rem', overflow: 'hidden' }}>
+        <div className="panel">
+          <h2>预览效果</h2>
           <PreviewCanvas
-            resultUrl={resultUrl}
+            imageUrl={generatedImage?.url}
             isGenerating={isGenerating}
-            onDownload={handleDownload}
+            processingTime={generatedImage?.processingTime}
           />
-        </section>
 
-        {/* Right Column: Settings */}
-        <aside className="panel">
-          <h3 className="label" style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>生成设置</h3>
+          {generatedImage && (
+            <div className="preview-actions">
+              <button className="button" onClick={handleRegenerate}>
+                重新生成
+              </button>
+              <button className="button" onClick={handleDownload}>
+                下载图片
+              </button>
+            </div>
+          )}
+        </div>
 
-          <div className="form-group">
-            <label className="label">3. 视角选择</label>
-            <div className="text-xs text-secondary mb-2">选择生成图像的相机视角</div>
-            <select
-              className="select"
-              value={viewAngle}
-              onChange={(e) => setViewAngle(e.target.value)}
-            >
-              <option value="perspective">透视图 (Perspective)</option>
-              <option value="top">俯视图 (Top View)</option>
-              <option value="front">正视图 (Front View)</option>
-              <option value="side">侧视图 (Side View)</option>
-            </select>
-          </div>
+        <div className="panel">
+          <h2>生成设置</h2>
+          <OptionsPanel
+            settings={settings}
+            onSettingsChange={handleSettingsChange}
+          />
+        </div>
+      </div>
 
-          <div className="form-group">
-            <label className="label">4. 风格选择</label>
-            <div className="text-xs text-secondary mb-2">选择渲染的艺术风格</div>
-            <select
-              className="select"
-              value={style}
-              onChange={(e) => setStyle(e.target.value)}
-            >
-              <option value="realistic">写实渲染 (Realistic)</option>
-              <option value="technical">技术线稿 (Technical)</option>
-              <option value="cartoon">简约卡通 (Cartoon)</option>
-            </select>
-          </div>
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
 
-          <div className="mt-auto p-4 bg-blue-50 rounded-lg text-sm text-blue-800" style={{ background: '#eff6ff', color: '#1e40af' }}>
-            <strong>💡 提示:</strong>
-            <p className="mt-1">上传清晰的平面图，并在描述中补充材质或颜色信息，效果会更好。</p>
-          </div>
-        </aside>
-      </main>
+      {generatedImage && (
+        <div className="success-message">
+          生成成功！用时 {generatedImage.processingTime} 秒
+        </div>
+      )}
     </div>
-  );
+  )
 }
