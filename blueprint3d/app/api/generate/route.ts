@@ -4,7 +4,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const response = await fetch('http://localhost:8000/api/generate', {
+    // 使用环境变量或默认值
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+    const response = await fetch(`${apiUrl}/api/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
