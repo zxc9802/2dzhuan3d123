@@ -12,7 +12,6 @@ services:
           type: web
           name: blueprint3d-backend
           property: host
-    source: .
 
   - type: web
     name: blueprint3d-backend
