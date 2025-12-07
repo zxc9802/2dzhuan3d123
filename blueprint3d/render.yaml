@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: blueprint3d-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: blueprint3d-backend
+          property: host
+    source: .
+    
+  - type: web
+    name: blueprint3d-backend
+    env: python
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 10000
+      - key: DOBAO_API_KEY
+        sync: false
+      - key: DOBAO_API_URL
+        value: https://ark.cn-beijing.volces.com/api/v3/images/generations
+      - key: DOBAO_MODEL
+        value: doubao-seedream-4-5-251128

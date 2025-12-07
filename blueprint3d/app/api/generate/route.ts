@@ -4,8 +4,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // 使用环境变量或默认值
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    // 在 Render 中，前后端在同一项目，可使用相对路径
+    // 开发环境使用 localhost，生产环境使用内部服务名
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    const apiUrl = isDevelopment
+      ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
+      : `http://blueprint3d-backend:${process.env.PORT || 10000}`
 
     const response = await fetch(`${apiUrl}/api/generate`, {
       method: 'POST',

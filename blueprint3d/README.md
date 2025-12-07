@@ -180,30 +180,102 @@ blueprint3d/
 
 ## 🔧 部署
 
-### Vercel + Railway 部署
+### Render 部署 【最简单，一键全栈】⭐
+
+Render 是最推荐的部署方式，可以一次性部署前端+后端，操作最简单！
+
+#### 一键部署步骤
+
+1. **访问 Render**
+   - 打开 [render.com](https://render.com)
+   - 使用 GitHub 账户登录
+
+2. **创建 Web Service**
+   - 点击 "New" → "Web Service"
+   - 选择 "Build and deploy from a Git repository"
+   - 选择仓库 `zxc9802/2dzhuan3d123.git`
+
+3. **自动检测配置**
+   - Render 会自动检测 `render.yaml` 配置
+   - 自动创建两个服务：frontend 和 backend
+
+4. **配置环境变量**
+   在 Render 控制台为 backend 服务添加：
+   ```
+   DOBAO_API_KEY=你的火山引擎 API Key
+   DOBAO_API_URL=https://ark.cn-beijing.volces.com/api/v3/images/generations
+   DOBAO_MODEL=doubao-seedream-4-5-251128
+   ```
+
+5. **部署完成**
+   - Render 自动构建并部署
+   - 获得两个 HTTPS 域名：
+     - Frontend: `https://blueprint3d-frontend.onrender.com`
+     - Backend: `https://blueprint3d-backend.onrender.com`
+
+#### Render 优势
+- ✅ **免费额度好** - 每月 750 小时运行时间
+- ✅ **一键全栈** - 前端后端一次部署
+- ✅ **操作简单** - 图形界面点点即可
+- ✅ **自动域名** - 免费 HTTPS 域名
+- ✅ **自动部署** - Git 推送即自动部署
+
+---
+
+### Vercel + Railway 部署 【备选方案】
 
 #### 1. 部署后端到 Railway
+
+**方式一：通过 Web UI（推荐）**
+1. 访问 [railway.app](https://railway.app) 并登录
+2. 点击 "New Project" → "Deploy from GitHub repo"
+3. 选择仓库 `zxc9802/2dzhuan3d123.git`
+4. Railway 会自动部署（已配置 `railway.toml`）
+5. 部署完成后，点击服务 → Settings → Domains 获取 URL
+
+**方式二：通过 CLI**
 ```bash
 # 安装 Railway CLI
 npm install -g @railway/cli
 
-# 登录并部署
+# 登录
 railway login
+
+# 在项目目录中初始化并部署
+cd blueprint3d
 railway init
 railway deploy
 ```
 
+**配置环境变量**
+在 Railway 控制台添加以下环境变量：
+- `DOBAO_API_KEY`: 你的火山引擎 API Key
+- `DOBAO_API_URL`: `https://ark.cn-beijing.volces.com/api/v3/images/generations`
+- `DOBAO_MODEL`: `doubao-seedream-4-5-251128`
+
 #### 2. 部署前端到 Vercel
+
+**方式一：通过 Web UI（推荐）**
+1. 访问 [vercel.com](https://vercel.com) 并登录
+2. 点击 "New Project" → Import Git Repository
+3. 选择仓库 `zxc9802/2dzhuan3d123.git`
+4. Vercel 会自动检测 Next.js 配置
+5. 添加环境变量：`NEXT_PUBLIC_API_URL` = 你的 Railway 后端 URL
+6. 点击 "Deploy"
+
+**方式二：通过 CLI**
 ```bash
 # 安装 Vercel CLI
 npm install -g vercel
 
 # 部署
+cd blueprint3d
 vercel --prod
 ```
 
-#### 3. 更新前端 API 代理配置
-部署后需要更新 `app/api/generate/route.ts` 中的后端服务 URL
+**重要环境变量**
+确保在 Vercel 项目设置中添加：
+- `NEXT_PUBLIC_API_URL`: `https://your-app.railway.app`（你的 Railway 后端地址）
 
 ## 🧪 测试
 
